@@ -124,6 +124,6 @@ demo datasets are **publicly available on this github repo**.
     - incomplete coverage of global river systems
 
 ## Citation
-Yue Xu, Peirong Lin\*, et al. Uncovering Hydraulic Discontinuities in Global Rivers with SWOT (in prep).  
+Yue Xu, Peirong Lin\*, et al. Uncovering Hydraulic Discontinuities in Global Rivers with SWOT (in review).  
 \* Corresponding Author: Peirong Lin (peironglinlin@pku.edu.cn)  
 Contacts: Yue XU (xuyue6371@pku.edu.cn)
