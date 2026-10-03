@@ -18,7 +18,8 @@ scripts/
 │
 └── 02_detection
     ├── 01_SWOOP.ipynb # SWOOP detection workflow
-    └── 02_SWOOP_demo.ipynb # Reproducible demo of SWOOP pipeline
+    ├── 02_SWOOP_demo.ipynb # Reproducible demo of SWOOP pipeline
+    └── 03_SWOOP_demo_interactive.ipynb # Interactive annotation of demo test candidates
 ```
 
 ## Data File Structure
@@ -39,7 +40,11 @@ data/
 │   ├── demo_eu_test_sigma0.csv
 │   ├── demo_eu_test_occu.csv
 │   ├── demo_eu_test_step_candidates.csv
-│   └── demo_eu_test_step_candidates_with_cc.csv
+│   ├── demo_eu_test_step_candidates_with_cc.csv
+│   ├── demo_eu_test_rf_predictions.csv # Candidate features and RF predictions used for review
+│   ├── demo_eu_test_node_geometry.csv # Included node_id/lon/lat lookup for demo test nodes
+│   ├── demo_eu_test_candidates_interactive_ANNOTATED.csv # Generated when annotations are saved
+│   └── crop2.png # Interactive annotation screenshot
 │
 ├── raw/ # Original SWOT data files downloaded from NASA Earthdata
 │   └── RiverSP_VC/
@@ -91,6 +96,12 @@ data/
     - rioxarray>=0.15
     - dask>=2024.1
     - scikit-learn>=1.8
+    - matplotlib (interactive annotation demo)
+    - plotly (interactive annotation demo)
+    - ipywidgets (interactive annotation demo)
+    - folium (interactive annotation demo)
+
+Run the interactive annotation notebook in a Jupyter environment with widget support. An internet connection is needed to load the satellite basemap.
 
 ## Script Descriptions
 ### 1. Raw data preprocessing (`01_preprocess/01_nodePre.py`)
@@ -101,6 +112,8 @@ Prepares **analysis-ready datasets** from the daily node data generated in the p
 Implements the **SWOOP (SWOT Obstruction Profile)** workflow.
 ### 4. Demo Pipeline (`02_detection/02_SWOOP_demo.ipynb`)
 Uses a small subset of data to run the **SWOOP** workflow.
+### 5. Interactive Demo Annotation (`02_detection/03_SWOOP_demo_interactive.ipynb`)
+Provides an interactive labeling interface for all **139 demo test candidates**, combining a satellite map with a local three-dimensional WSE profile across nodes and observation dates. All candidate, observation, and coordinate inputs are included in `data/demo_data/`.
 
 ## Usage
 ### Data Download
@@ -112,8 +125,31 @@ All required datasets are **publicly available and can be downloaded from the or
 The core workflow of detection algorithm in `scripts/02_detection/` requires prepared analysis-ready datasets. To facilitate reproducibility,
 demo datasets are **publicly available on this github repo**.
 
-### Open and run (demo):  
-```scripts/02_detection/02_SWOOP_demo.ipynb```
+### Open and run (demo):
+
+#### Step 1. Run the SWOOP detection demo (`02_SWOOP_demo.ipynb`)
+
+Open [02_SWOOP_demo.ipynb](scripts/02_detection/02_SWOOP_demo.ipynb) in Jupyter and run its cells from top to bottom. This notebook demonstrates the detection and classification workflow using the supplied training and European test datasets in `data/demo_data/`:
+
+1. Aggregate repeated node observations into median WSE profiles, WSE standard deviations, and mean river widths, then combine them with radar backscatter and water occurrence data.
+2. Detect candidate step changes along each reach and calculate their diagnostic features for both the training and test datasets.
+3. Compute local profile-correlation (CC) features by comparing daily WSE profiles with the median profile around each candidate node.
+4. Train a Random Forest classifier on the supplied manually annotated training candidates and predict the probability and binary label for each test candidate.
+
+The notebook saves candidate and CC feature tables, all test predictions in `demo_eu_test_rf_predictions.csv`, and the predicted positive subset in `demo_eu_test_rf_positive.csv`. All outputs are written to `data/demo_data/`. The all-prediction table is the input for Step 2; precomputed demo outputs are also included in the repository.
+
+#### Step 2. Interactively annotate test candidates (`03_SWOOP_demo_interactive.ipynb`)
+
+Open [03_SWOOP_demo_interactive.ipynb](scripts/02_detection/03_SWOOP_demo_interactive.ipynb) and run its cells from top to bottom. This notebook reviews all test candidates in `demo_eu_test_rf_predictions.csv`, using the included test observations and `demo_eu_test_node_geometry.csv` coordinates to display each case.
+
+- Inspect the satellite map and the WSE profile for the candidate node and its neighbors.
+- Select **T/F** (`Y` or `N`). Positive cases also require **N/A** (`N` = natural, `A` = artificial) and a **Type**: `waterfall` or `rapid` for natural cases; `dam`, `low head`, or `bridge` for artificial cases. Type has no `?` option. Notes are optional.
+- **Save & Next** saves a complete annotation and finds the next unlabeled case. **Skip** moves to the next unlabeled case without saving the current form changes; the search wraps to the start, so skipped cases are revisited. **Save (stay)** saves the current case, and **Back** revisits the previous case.
+- Annotations are saved separately as `data/demo_data/demo_eu_test_candidates_interactive_ANNOTATED.csv`, with an `_AUTOSAVE_BACKUP.csv` copy of the previous saved version.
+
+Example of the interactive annotation interface:
+
+![Interactive demo showing the satellite map, three-dimensional WSE profile, and annotation controls](data/demo_data/crop2.png)
 
 ### Reproducibility Notes
 - The demo dataset is a small subset sampled from the full dataset
